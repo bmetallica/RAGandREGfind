@@ -52,6 +52,44 @@ interface SupplementalSearchRow {
 
 type ViewerKind = "html" | "markdown" | "code" | "text";
 
+const VIEWER_CODE_FILE_TYPES = new Set([
+  "js", "jsx", "ts", "tsx", "py", "java", "go", "rs", "rb", "php", "c", "cc", "cpp", "h", "hpp",
+  "cs", "sh", "bash", "zsh", "json", "yml", "yaml", "toml", "ini", "cfg", "conf", "xml", "sql", "css", "scss", "less"
+]);
+
+const VIEWER_BINARY_FILE_TYPES = new Set([
+  "pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "odt", "ods", "odp", "rtf",
+  "png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "tif", "tiff", "ico",
+  "mp3", "wav", "ogg", "m4a", "flac", "mp4", "mkv", "mov", "avi", "webm",
+  "zip", "rar", "7z", "gz", "tar", "bz2"
+]);
+
+const VIEWER_BINARY_MIME_PREFIXES = [
+  "image/",
+  "audio/",
+  "video/",
+  "application/pdf"
+];
+
+const VIEWER_BINARY_MIME_TYPES = new Set([
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  "application/vnd.ms-powerpoint",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+  "application/vnd.oasis.opendocument.text",
+  "application/vnd.oasis.opendocument.spreadsheet",
+  "application/vnd.oasis.opendocument.presentation",
+  "application/rtf",
+  "application/zip",
+  "application/x-zip-compressed",
+  "application/x-rar-compressed",
+  "application/x-7z-compressed",
+  "application/gzip",
+  "application/x-tar"
+]);
+
 interface ViewerContent {
   title: string;
   sourceRef: string;
@@ -395,16 +433,49 @@ function detectViewerKind(document: NonNullable<Awaited<ReturnType<typeof findDo
 
   if (
     document.sourceType === "git"
-    || [
-      "js", "jsx", "ts", "tsx", "py", "java", "go", "rs", "rb", "php", "c", "cc", "cpp", "h", "hpp",
-      "cs", "sh", "bash", "zsh", "json", "yml", "yaml", "toml", "ini", "cfg", "conf", "xml", "sql", "css", "scss", "less"
-    ].includes(fileType)
+    || VIEWER_CODE_FILE_TYPES.has(fileType)
     || mimeType.startsWith("text/") && fileType !== "txt"
   ) {
     return "code";
   }
 
   return "text";
+}
+
+function isViewerSupportedDocument(document: NonNullable<Awaited<ReturnType<typeof findDocument>>>): boolean {
+  if (looksLikeHtmlDocument(document)) {
+    return true;
+  }
+
+  const fileType = document.fileType?.toLowerCase() ?? "";
+  const mimeType = document.mimeType?.toLowerCase() ?? "";
+  const sourceRef = document.sourceRef.toLowerCase();
+
+  if ([...VIEWER_BINARY_MIME_PREFIXES].some((prefix) => mimeType.startsWith(prefix))) {
+    return false;
+  }
+
+  if (VIEWER_BINARY_MIME_TYPES.has(mimeType) || VIEWER_BINARY_FILE_TYPES.has(fileType)) {
+    return false;
+  }
+
+  if (["md", "markdown", "mdx", "txt", "text"].includes(fileType)) {
+    return true;
+  }
+
+  if (VIEWER_CODE_FILE_TYPES.has(fileType)) {
+    return true;
+  }
+
+  if (sourceRef.endsWith(".md") || sourceRef.endsWith(".markdown") || sourceRef.endsWith(".txt")) {
+    return true;
+  }
+
+  if (mimeType.includes("markdown") || mimeType.startsWith("text/")) {
+    return true;
+  }
+
+  return document.sourceType === "git" || document.sourceType.startsWith("crawl");
 }
 
 function detectHighlightLanguage(sourceRef: string, fileType: string | null, mimeType: string | null): string | undefined {
@@ -954,6 +1025,7 @@ async function start() {
       }
 
       const file = await getDocumentFile(document.id);
+      const forceDownload = String(request.query.download ?? "").trim() === "1";
       if (!file) {
         if (document.sourceType.startsWith("crawl")) {
           if (looksLikeHtmlDocument(document) || extractedTextLooksLikeMarkup(document.extractedText)) {
@@ -998,7 +1070,8 @@ async function start() {
         response.type(file.mimeType);
       }
       if (file.originalName) {
-        response.setHeader("Content-Disposition", `inline; filename="${file.originalName.replace(/\"/g, "")}"`);
+        const disposition = forceDownload ? "attachment" : "inline";
+        response.setHeader("Content-Disposition", `${disposition}; filename="${file.originalName.replace(/\"/g, "")}"`);
       }
       response.sendFile(absolutePath);
     } catch (error) {
@@ -1023,6 +1096,12 @@ async function start() {
         response.status(404).json({ error: "document not found in configured RAGfind knowledge bases" });
         return;
       }
+
+      if (!isViewerSupportedDocument(document)) {
+        response.redirect(`/api/documents/${document.id}/original?download=1`);
+        return;
+      }
+
       const viewer = await buildViewerContent(document);
       response.type("text/html; charset=utf-8");
       response.send(renderMultisourceViewerPage(viewer));
