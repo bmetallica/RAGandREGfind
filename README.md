@@ -399,9 +399,14 @@ Available tools cover:
 This repository is prepared to be published on GitHub with:
 
 - a repository-focused README
+- an MIT license
 - `.gitignore` for Node, build, local env, and import artifacts
 - container-based and local development instructions
 - explicit separation between admin surface and `RAGfind`
+
+## License
+
+This project is licensed under the MIT License. See `LICENSE`.
 
 ## Roadmap And Design Notes
 
