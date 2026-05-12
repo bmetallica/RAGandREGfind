@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RAGfind</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="page-shell" data-view="home">
+    <header class="topbar topbar--home">
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Dark Mode umschalten">
+        <span class="theme-toggle__sun">Licht</span>
+        <span class="theme-toggle__moon">Dunkel</span>
+      </button>
+    </header>
+
+    <main class="hero" id="hero-view">
+      <div class="logo" aria-label="RAGfind">
+        <span class="logo__r">R</span><span class="logo__a">A</span><span class="logo__g">G</span><span class="logo__f">f</span><span class="logo__i">i</span><span class="logo__n">n</span><span class="logo__d">d</span>
+      </div>
+      <p class="tagline">Dokumentensuche nur in den fuer RAGfind freigegebenen Wissensdatenbanken.</p>
+      <form class="search-form search-form--hero" id="search-form" role="search">
+        <label class="sr-only" for="search-input">Suche</label>
+        <div class="search-box">
+          <input id="search-input" name="q" type="search" autocomplete="off" placeholder="Dokumente, Abschnitte und offene Punkte durchsuchen" required>
+          <button class="search-submit" type="submit">Suchen</button>
+        </div>
+      </form>
+      <p class="scope-note" id="scope-note">Lade Suchbereich ...</p>
+    </main>
+
+    <main class="results-view hidden" id="results-view">
+      <header class="results-header">
+        <a class="results-brand" href="/">
+          <span class="logo logo--small" aria-hidden="true">
+            <span class="logo__r">R</span><span class="logo__a">A</span><span class="logo__g">G</span><span class="logo__f">f</span><span class="logo__i">i</span><span class="logo__n">n</span><span class="logo__d">d</span>
+          </span>
+        </a>
+        <form class="search-form search-form--results" id="results-search-form" role="search">
+          <label class="sr-only" for="results-search-input">Suche</label>
+          <div class="search-box">
+            <input id="results-search-input" name="q" type="search" autocomplete="off" required>
+            <button class="search-submit" type="submit">Suchen</button>
+          </div>
+        </form>
+      </header>
+
+      <section class="results-meta" id="results-meta"></section>
+      <section class="results-list" id="results-list"></section>
+      <section class="empty-state hidden" id="empty-state"></section>
+    </main>
+  </div>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>

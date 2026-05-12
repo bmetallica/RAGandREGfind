@@ -1,0 +1,156 @@
+version: "3.9"
+
+services:
+  rag-db:
+    image: ankane/pgvector:latest
+    container_name: rag-db
+    environment:
+      POSTGRES_DB: rag_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - rag-db-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: rag-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.3
+    container_name: rag-elasticsearch
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+
+  ingestor-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rag-ingestor-app
+    env_file:
+      - .env
+    environment:
+      PORT: ${PORT:-3311}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://user:password@rag-db:5432/rag_db}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-nomic-embed-text}
+      LLM_MODEL: ${LLM_MODEL:-gptoss-20b}
+      DOCUMENT_CLASSIFIER_OLLAMA_BASE_URL: ${DOCUMENT_CLASSIFIER_OLLAMA_BASE_URL:-${OLLAMA_BASE_URL}}
+      DOCUMENT_CLASSIFIER_MODEL: ${DOCUMENT_CLASSIFIER_MODEL:-qwen2.5:7b}
+      EMBEDDING_DIMENSION: ${EMBEDDING_DIMENSION:-768}
+      QUERY_TOP_K: ${QUERY_TOP_K:-5}
+      CHUNK_SIZE: ${CHUNK_SIZE:-1200}
+      CHUNK_OVERLAP: ${CHUNK_OVERLAP:-200}
+      IMPORT_DIR: ${IMPORT_DIR:-/app/import-dir}
+      UPLOAD_DIR: ${UPLOAD_DIR:-/app/data/uploads}
+      GIT_REPO_CACHE_DIR: ${GIT_REPO_CACHE_DIR:-/app/data/git-repos}
+      GIT_REPO_MAX_FILE_BYTES: ${GIT_REPO_MAX_FILE_BYTES:-1000000}
+      ELASTICSEARCH_URL: ${ELASTICSEARCH_URL:-http://elasticsearch:9200}
+      ELASTICSEARCH_INDEX_PREFIX: ${ELASTICSEARCH_INDEX_PREFIX:-rag}
+      CRAWL_DEFAULT_MAX_DEPTH: ${CRAWL_DEFAULT_MAX_DEPTH:-2}
+      SYNC_CRON: ${SYNC_CRON:-*/30 * * * *}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "3311:3311"
+    depends_on:
+      - rag-db
+      - redis
+      - elasticsearch
+    volumes:
+      - app-data:/app/data
+      - ./import-dir:/app/import-dir
+
+  ingestor-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rag-ingestor-worker
+#    command: ["node", "dist/workers/worker.js"]
+    command: ["sh", "-c", "sleep 10 && node dist/workers/worker.js"]
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://user:password@rag-db:5432/rag_db}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-nomic-embed-text}
+      LLM_MODEL: ${LLM_MODEL:-gptoss-20b}
+      DOCUMENT_CLASSIFIER_OLLAMA_BASE_URL: ${DOCUMENT_CLASSIFIER_OLLAMA_BASE_URL:-${OLLAMA_BASE_URL}}
+      DOCUMENT_CLASSIFIER_MODEL: ${DOCUMENT_CLASSIFIER_MODEL:-qwen2.5:7b}
+      EMBEDDING_DIMENSION: ${EMBEDDING_DIMENSION:-768}
+      QUERY_TOP_K: ${QUERY_TOP_K:-5}
+      CHUNK_SIZE: ${CHUNK_SIZE:-1200}
+      CHUNK_OVERLAP: ${CHUNK_OVERLAP:-200}
+      IMPORT_DIR: ${IMPORT_DIR:-/app/import-dir}
+      UPLOAD_DIR: ${UPLOAD_DIR:-/app/data/uploads}
+      GIT_REPO_CACHE_DIR: ${GIT_REPO_CACHE_DIR:-/app/data/git-repos}
+      GIT_REPO_MAX_FILE_BYTES: ${GIT_REPO_MAX_FILE_BYTES:-1000000}
+      ELASTICSEARCH_URL: ${ELASTICSEARCH_URL:-http://elasticsearch:9200}
+      ELASTICSEARCH_INDEX_PREFIX: ${ELASTICSEARCH_INDEX_PREFIX:-rag}
+      CRAWL_DEFAULT_MAX_DEPTH: ${CRAWL_DEFAULT_MAX_DEPTH:-2}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      - rag-db
+      - redis
+      - elasticsearch
+    volumes:
+      - app-data:/app/data
+      - ./import-dir:/app/import-dir
+
+  ragfind:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rag-ragfind
+    command: ["node", "dist/ragfind/server.js"]
+    env_file:
+      - .env
+    environment:
+      PORT: 3312
+      DATABASE_URL: ${DATABASE_URL:-postgresql://user:password@rag-db:5432/rag_db}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-nomic-embed-text}
+      LLM_MODEL: ${LLM_MODEL:-gptoss-20b}
+      DOCUMENT_CLASSIFIER_OLLAMA_BASE_URL: ${DOCUMENT_CLASSIFIER_OLLAMA_BASE_URL:-${OLLAMA_BASE_URL}}
+      DOCUMENT_CLASSIFIER_MODEL: ${DOCUMENT_CLASSIFIER_MODEL:-qwen2.5:7b}
+      EMBEDDING_DIMENSION: ${EMBEDDING_DIMENSION:-768}
+      QUERY_TOP_K: ${QUERY_TOP_K:-5}
+      CHUNK_SIZE: ${CHUNK_SIZE:-1200}
+      CHUNK_OVERLAP: ${CHUNK_OVERLAP:-200}
+      IMPORT_DIR: ${IMPORT_DIR:-/app/import-dir}
+      UPLOAD_DIR: ${UPLOAD_DIR:-/app/data/uploads}
+      ORIGINAL_STORAGE_DIR: ${ORIGINAL_STORAGE_DIR:-/app/data/originals}
+      GIT_REPO_CACHE_DIR: ${GIT_REPO_CACHE_DIR:-/app/data/git-repos}
+      GIT_REPO_MAX_FILE_BYTES: ${GIT_REPO_MAX_FILE_BYTES:-1000000}
+      ELASTICSEARCH_URL: ${ELASTICSEARCH_URL:-http://elasticsearch:9200}
+      ELASTICSEARCH_INDEX_PREFIX: ${ELASTICSEARCH_INDEX_PREFIX:-rag}
+      CRAWL_DEFAULT_MAX_DEPTH: ${CRAWL_DEFAULT_MAX_DEPTH:-2}
+      SYNC_CRON: ${SYNC_CRON:-*/30 * * * *}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "3312:3312"
+    depends_on:
+      - rag-db
+      - redis
+      - elasticsearch
+    volumes:
+      - app-data:/app/data
+
+volumes:
+  rag-db-data:
+  redis-data:
+  app-data:
+  elasticsearch-data:

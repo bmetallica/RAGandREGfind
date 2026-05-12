@@ -1,0 +1,18 @@
+node_modules/
+dist/
+.env
+.venv/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+data/
+import-dir/
+e up -d --build ingestor-app ingestor-worker
+
+.DS_Store
+Thumbs.db
+
+*.log
+coverage/
