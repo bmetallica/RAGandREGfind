@@ -1,207 +1,207 @@
-# RAG and RAGfind
+# RAG und RAGfind
 
-Document-centric RAG platform with ingestion, hybrid retrieval, MCP integration, admin tooling, and a separate local-first search UI called `RAGfind`.
+Dokumentzentrierte RAG-Plattform mit Ingestion, hybrider Suche, MCP-Integration, Admin-Werkzeugen und einer separaten lokalen Suchoberflaeche namens `RAGfind`.
 
-The stack ingests uploads, synced folders, crawled websites, and git repositories; extracts and structures their content; stores embeddings and metadata in PostgreSQL; exposes document-centric APIs and MCP tools; and provides two operator-facing surfaces:
+Der Stack ingestiert Uploads, synchronisierte Verzeichnisse, gecrawlte Websites und Git-Repositories, extrahiert und strukturiert deren Inhalte, speichert Embeddings und Metadaten in PostgreSQL, stellt dokumentzentrierte APIs und MCP-Tools bereit und bietet zwei sichtbare Oberflaechen:
 
-- the admin and operations console on port `3311`
-- the end-user search interface `RAGfind` on port `3312`
+- die Admin- und Betriebskonsole auf Port `3311`
+- die Endnutzer-Suchoberflaeche `RAGfind` auf Port `3312`
 
-## What The Project Does
+## Was Das Projekt Macht
 
-This repository is built for teams that need more than raw vector search.
+Dieses Repository ist fuer Teams gedacht, die mehr brauchen als reine Vektorsuche.
 
-It combines:
+Es kombiniert:
 
-- ingestion for uploads, local folders, websites, and git repositories
-- OCR fallback for scanned or difficult documents
-- hybrid search across vector, keyword, fuzzy, and document-aware reranking signals
-- persisted document structure with sections and chunk-to-section mapping
-- document analysis workflows for actions, decisions, deadlines, risks, requirements, setup steps, config keys, API surfaces, and summaries
-- MCP access over HTTP and stdio for Open WebUI and other MCP-capable clients
-- knowledge-base-aware admin controls and principal-based access scope
-- `RAGfind`, a separate search frontend with a local multisource viewer for HTML, Markdown, code, and plaintext
+- Ingestion fuer Uploads, lokale Verzeichnisse, Websites und Git-Repositories
+- OCR-Fallback fuer gescannte oder schwer extrahierbare Dokumente
+- hybride Suche ueber Vektor-, Keyword-, Fuzzy- und dokumentzentrierte Reranking-Signale
+- persistierte Dokumentstruktur mit Sections und Chunk-zu-Section-Zuordnung
+- Analyse-Workflows fuer Aufgaben, Entscheidungen, Fristen, Risiken, Anforderungen, Setup-Schritte, Config-Keys, API-Surfaces und Zusammenfassungen
+- MCP-Zugriff ueber HTTP und stdio fuer Open WebUI und andere MCP-faehige Clients
+- wissensdatenbankbewusste Admin-Steuerung und principalbasierte Zugriffsskopierung
+- `RAGfind` als separate Suchoberflaeche mit lokalem Multisource-Viewer fuer HTML, Markdown, Code und Plaintext
 
-## Current Runtime Surfaces
+## Aktuelle Laufzeitoberflaechen
 
 ### Admin / API / MCP
 
 - URL: `http://localhost:3311`
-- provides the operator UI, ingestion forms, document browser, admin settings, document APIs, and MCP endpoint
-- Basic Auth is enabled for the admin console and admin APIs
-- default login is `admin` / `admin` until changed in the UI
+- stellt Operator-UI, Ingestion-Formulare, Dokumentbrowser, Admin-Einstellungen, Dokument-APIs und den MCP-Endpunkt bereit
+- Basic Auth ist fuer Admin-Oberflaeche und Admin-APIs aktiv
+- Standard-Login ist `admin` / `admin`, bis es im UI geaendert wird
 
 ### RAGfind
 
 - URL: `http://localhost:3312`
-- separate search container and frontend
-- search scope is configurable from the admin UI on port `3311`
-- search is limited to the knowledge bases selected for `RAGfind`
-- search results open in a local multisource viewer instead of jumping straight to remote pages
+- separater Such-Container und eigene Frontend-Oberflaeche
+- der Such-Scope ist im Admin-UI auf Port `3311` konfigurierbar
+- gesucht wird nur in den fuer `RAGfind` freigegebenen Wissensdatenbanken
+- Suchergebnisse oeffnen in einem lokalen Multisource-Viewer statt direkt auf externe Seiten zu springen
 
 ### MCP
 
-- HTTP endpoint: `http://localhost:3311/mcp`
-- local stdio entrypoint: `npm run dev:mcp:stdio` or `npm run start:mcp:stdio`
+- HTTP-Endpunkt: `http://localhost:3311/mcp`
+- lokaler stdio-Einstieg: `npm run dev:mcp:stdio` oder `npm run start:mcp:stdio`
 
-## Key Features
+## Kernfunktionen
 
 ### Ingestion
 
-- manual uploads
-- import directory sync via mounted folder
-- recursive website crawling with file download support
-- git repository sync with optional branch and subpath scoping
-- extraction for PDF, DOCX, ODT, TXT, Markdown, HTML, JSON, YAML, SQL, JS, TS, Python, shell scripts, and other text/code formats
-- OCR fallback using Tesseract and Ghostscript when direct extraction is insufficient
-- SHA-256 deduplication before chunk/vector persistence
+- manuelle Uploads
+- Import-Verzeichnis-Sync ueber gemounteten Ordner
+- rekursives Website-Crawling mit Download-Unterstuetzung fuer Dateien
+- Git-Repository-Sync mit optionalem Branch- und Subpfad-Scope
+- Extraktion fuer PDF, DOCX, ODT, TXT, Markdown, HTML, JSON, YAML, SQL, JS, TS, Python, Shell-Skripte und andere Text-/Code-Formate
+- OCR-Fallback mit Tesseract und Ghostscript, wenn direkte Extraktion nicht ausreicht
+- SHA-256-Deduplizierung vor Chunk- und Vektorpersistenz
 
 ### Retrieval
 
-- semantic vector search in PostgreSQL + pgvector
-- PostgreSQL full-text search
-- fuzzy matching via trigram indexes
-- exact-match boosts for title, source reference, and content
-- document-aware reranking and document-focus refinement
-- small-to-big context expansion around strong hits
-- inventory mode for "which documents exist?" style queries
-- search improvements for repo-style and entity-style queries in MCP/Open WebUI flows
+- semantische Vektorsuche in PostgreSQL plus pgvector
+- PostgreSQL-Fulltext-Suche
+- Fuzzy-Matching ueber Trigram-Indexe
+- Exact-Match-Booster fuer Titel, Source-Ref und Inhalt
+- dokumentzentriertes Reranking und Dokumentfokus-Verfeinerung
+- Small-to-Big-Kontexterweiterung um starke Treffer herum
+- Inventarmodus fuer Anfragen wie "welche Dokumente gibt es"
+- Suchverbesserungen fuer Repo- und Entity-lastige MCP- und Open-WebUI-Abfragen
 
-### Document-Centric Access
+### Dokumentzentrierter Zugriff
 
-- full document fulltext retrieval
-- persisted sections and structure navigation
-- original file metadata and stable download URLs
-- document comparison and version comparison
-- cross-reference queries across documents
-- local viewer for crawled websites, Markdown, code files, and plaintext
+- Volltextabruf kompletter Dokumente
+- persistierte Sections und Strukturnavigation
+- Originaldatei-Metadaten und stabile Download-URLs
+- Dokumentvergleich und Versionsvergleich
+- Cross-Reference-Abfragen ueber mehrere Dokumente hinweg
+- lokaler Viewer fuer gecrawlte Websites, Markdown, Code-Dateien und Plaintext
 
-### Analysis
+### Analyse
 
-- meeting action extraction
-- decision extraction
-- deadline extraction
-- requirement extraction
-- config key extraction
-- setup step extraction
-- API surface extraction
-- operational note extraction
-- risk extraction
-- entity extraction
-- document and section summaries
+- Extraktion von Meeting-Aufgaben
+- Entscheidungsextraktion
+- Fristenextraktion
+- Anforderungsextraktion
+- Extraktion von Config-Keys
+- Extraktion von Setup-Schritten
+- Extraktion von API-Surfaces
+- Extraktion operativer Hinweise
+- Risikoextraktion
+- Entitaetenextraktion
+- Dokument- und Section-Zusammenfassungen
 
-### Admin And Multi-KB Controls
+### Admin- und Multi-KB-Steuerung
 
-- knowledge base CRUD in the admin UI
-- MCP principal management with KB scoping
-- admin user management and password change flow
-- editable document-type settings used by heuristics, classification, and smart search
-- configurable `RAGfind` knowledge-base scope
+- Knowledge-Base-CRUD im Admin-UI
+- MCP-Principal-Verwaltung mit KB-Scope
+- Admin-User-Verwaltung und Passwortwechsel-Flow
+- editierbare Dokumenttyp-Einstellungen fuer Heuristik, Klassifikation und Smart Search
+- konfigurierbarer Knowledge-Base-Scope fuer `RAGfind`
 
-## Architecture
+## Architektur
 
-Core runtime components:
+Zentrale Laufzeitkomponenten:
 
-- `ingestor-app`: Express API, admin dashboard, document APIs, MCP over HTTP
-- `ingestor-worker`: BullMQ worker for background ingestion and sync jobs
-- `ragfind`: separate Express runtime for the `RAGfind` search UI and local viewer
-- `rag-db`: PostgreSQL with pgvector
-- `redis`: BullMQ backend
-- `elasticsearch`: optional hybrid search signal source
-- external Ollama endpoint: embeddings, summaries, and document classification
+- `ingestor-app`: Express-API, Admin-Dashboard, Dokument-APIs, MCP ueber HTTP
+- `ingestor-worker`: BullMQ-Worker fuer Hintergrund-Ingestion und Sync-Jobs
+- `ragfind`: separater Express-Runtime fuer die `RAGfind`-Suche und den lokalen Viewer
+- `rag-db`: PostgreSQL mit pgvector
+- `redis`: BullMQ-Backend
+- `elasticsearch`: optionale Hybrid-Suchsignalquelle
+- externer Ollama-Endpunkt: Embeddings, Zusammenfassungen und Dokumentklassifikation
 
-Primary ingestion flow:
+Primaerer Ingestion-Flow:
 
-1. extract text from uploaded, synced, crawled, or git-based content
-2. fall back to OCR when extraction is insufficient
-3. normalize and chunk the content
-4. generate embeddings through Ollama
-5. persist documents, chunks, sections, original-file metadata, and analysis artifacts in PostgreSQL
-6. expose retrieval through HTTP, admin UI, MCP, and `RAGfind`
+1. Text aus Uploads, Syncs, Crawls oder Git-Inhalten extrahieren
+2. bei unzureichender Extraktion auf OCR zurueckfallen
+3. Inhalte normalisieren und in Chunks zerlegen
+4. Embeddings ueber Ollama erzeugen
+5. Dokumente, Chunks, Sections, Originaldatei-Metadaten und Analyse-Artefakte in PostgreSQL persistieren
+6. Retrieval ueber HTTP, Admin-UI, MCP und `RAGfind` bereitstellen
 
-## Repository Layout
+## Repository-Struktur
 
 ```text
 src/
-  config/          environment handling
-  db/              pool, migrations, startup migration runner
-  mcp/             MCP HTTP and stdio entrypoints
-  ragfind/         separate RAGfind server entrypoint
-  routes/          HTTP endpoints and shared retrieval logic
-  services/        ingestion, retrieval, OCR, analysis, sync, crawl, auth
-  utils/           chunking, files, hashing, logging
-  workers/         BullMQ worker runtime
-migrations/        PostgreSQL schema and index migrations
-public/            admin/operator frontend
-public/ragfind/    RAGfind frontend
-import-dir/        mounted import directory for sync-based ingestion
-scripts/           helper scripts for deployment workflows
+  config/          Environment-Handling
+  db/              Pool, Migrationen, Startup-Migrationslauf
+  mcp/             MCP-HTTP- und stdio-Einstiege
+  ragfind/         separater RAGfind-Server-Einstieg
+  routes/          HTTP-Endpunkte und gemeinsame Retrieval-Logik
+  services/        Ingestion, Retrieval, OCR, Analyse, Sync, Crawl, Auth
+  utils/           Chunking, Dateien, Hashing, Logging
+  workers/         BullMQ-Worker-Runtime
+migrations/        PostgreSQL-Schema- und Index-Migrationen
+public/            Admin-/Operator-Frontend
+public/ragfind/    RAGfind-Frontend
+import-dir/        gemountetes Import-Verzeichnis fuer Sync-basierte Ingestion
+scripts/           Hilfsskripte fuer Deployment-Workflows
 ```
 
-## Requirements
+## Anforderungen
 
 - Node.js `20.11+`
-- PostgreSQL with pgvector
+- PostgreSQL mit pgvector
 - Redis
-- external Ollama endpoint
-- Docker and Docker Compose for the simplest local deployment
-- optional OCR dependencies for scanned content
+- externer Ollama-Endpunkt
+- Docker und Docker Compose fuer den einfachsten lokalen Betrieb
+- optionale OCR-Abhaengigkeiten fuer gescannte Inhalte
 
-## Quick Start With Docker Compose
+## Schnellstart Mit Docker Compose
 
-1. Copy the environment template.
+1. Environment-Vorlage kopieren.
 
 ```bash
 cp .env.example .env
 ```
 
-2. Adjust at least these values:
+2. Mindestens diese Werte anpassen:
 
 - `OLLAMA_BASE_URL`
-- optionally `DOCUMENT_CLASSIFIER_OLLAMA_BASE_URL`
-- optionally `PUBLIC_BASE_URL`
+- optional `DOCUMENT_CLASSIFIER_OLLAMA_BASE_URL`
+- optional `PUBLIC_BASE_URL`
 
-3. Build and start the full stack.
+3. Gesamten Stack bauen und starten.
 
 ```bash
 docker compose up --build
 ```
 
-4. Open the admin console at `http://localhost:3311`.
+4. Admin-Konsole unter `http://localhost:3311` oeffnen.
 
-5. Open `RAGfind` at `http://localhost:3312`.
+5. `RAGfind` unter `http://localhost:3312` oeffnen.
 
-The default Compose stack starts:
+Der Standard-Compose-Stack startet:
 
-- admin/API/MCP on `3311`
-- `RAGfind` on `3312`
-- PostgreSQL on host port `5433`
-- Redis on host port `6379`
-- Elasticsearch on host port `9200`
+- Admin/API/MCP auf `3311`
+- `RAGfind` auf `3312`
+- PostgreSQL auf Host-Port `5433`
+- Redis auf Host-Port `6379`
+- Elasticsearch auf Host-Port `9200`
 
-## Local Development
+## Lokale Entwicklung
 
-1. Install dependencies.
+1. Abhaengigkeiten installieren.
 
 ```bash
 npm install
 ```
 
-2. Copy and adjust the environment file.
+2. Environment-Datei kopieren und anpassen.
 
 ```bash
 cp .env.example .env
 ```
 
-3. Start PostgreSQL, Redis, Elasticsearch if desired, and your Ollama endpoint.
+3. PostgreSQL, Redis, optional Elasticsearch und den Ollama-Endpunkt starten.
 
-4. Run migrations.
+4. Migrationen ausfuehren.
 
 ```bash
 npm run migrate
 ```
 
-5. Start the API, worker, and optionally `RAGfind` in separate terminals.
+5. API, Worker und optional `RAGfind` in getrennten Terminals starten.
 
 ```bash
 npm run dev
@@ -215,31 +215,31 @@ npm run dev:worker
 npm run dev:ragfind
 ```
 
-## Available Scripts
+## Verfuegbare Skripte
 
 ```bash
-npm run dev              # start API in watch mode
-npm run dev:worker       # start BullMQ worker in watch mode
-npm run dev:ragfind      # start RAGfind server in watch mode
-npm run dev:mcp:stdio    # run MCP server over stdio in watch mode
-npm run build            # compile TypeScript
-npm run start            # start compiled API
-npm run start:worker     # start compiled worker
-npm run start:ragfind    # start compiled RAGfind server
-npm run start:mcp:stdio  # start compiled MCP stdio server
-npm run migrate          # run SQL migrations
+npm run dev              # API im Watch-Modus starten
+npm run dev:worker       # BullMQ-Worker im Watch-Modus starten
+npm run dev:ragfind      # RAGfind-Server im Watch-Modus starten
+npm run dev:mcp:stdio    # MCP-Server ueber stdio im Watch-Modus starten
+npm run build            # TypeScript kompilieren
+npm run start            # kompilierte API starten
+npm run start:worker     # kompilierten Worker starten
+npm run start:ragfind    # kompilierten RAGfind-Server starten
+npm run start:mcp:stdio  # kompilierten MCP-stdio-Server starten
+npm run migrate          # SQL-Migrationen ausfuehren
 ```
 
-## Important Environment Variables
+## Wichtige Environment-Variablen
 
-Core services:
+Kernservices:
 
-- `PORT`: admin/API port, default `3311`
-- `DATABASE_URL`: PostgreSQL connection string
-- `REDIS_URL`: Redis connection string
-- `PUBLIC_BASE_URL`: used for emitted download links and external references
+- `PORT`: Admin/API-Port, Standard `3311`
+- `DATABASE_URL`: PostgreSQL-Connection-String
+- `REDIS_URL`: Redis-Connection-String
+- `PUBLIC_BASE_URL`: Basis fuer erzeugte Download-Links und externe Referenzen
 
-LLM and embedding:
+LLM und Embeddings:
 
 - `OLLAMA_BASE_URL`
 - `EMBEDDING_MODEL`
@@ -248,7 +248,7 @@ LLM and embedding:
 - `DOCUMENT_CLASSIFIER_MODEL`
 - `EMBEDDING_DIMENSION`
 
-Storage and ingestion:
+Speicherung und Ingestion:
 
 - `IMPORT_DIR`
 - `UPLOAD_DIR`
@@ -257,7 +257,7 @@ Storage and ingestion:
 - `GIT_REPO_MAX_FILE_BYTES`
 - `CRAWL_DEFAULT_MAX_DEPTH`
 
-Retrieval tuning:
+Retrieval-Tuning:
 
 - `QUERY_TOP_K`
 - `QUERY_CANDIDATE_K`
@@ -268,99 +268,99 @@ Retrieval tuning:
 - `QUERY_RERANK_TOP_N`
 - `QUERY_SMALL_TO_BIG_WINDOW`
 
-Search-layer integration:
+Suchschicht-Integration:
 
 - `ELASTICSEARCH_URL`
 - `ELASTICSEARCH_INDEX_PREFIX`
 
-See `.env.example` for the current defaults.
+Die aktuellen Defaults stehen in `.env.example`.
 
-## Dashboard And Admin UI
+## Dashboard und Admin-UI
 
-The admin console on port `3311` currently includes:
+Die Admin-Konsole auf Port `3311` enthaelt aktuell:
 
-- upload, crawl, directory sync, and git import forms
-- document browser with preview and per-document actions
-- document analysis trigger surfaces
-- document reclassification support
-- knowledge base management
-- MCP principal management
-- admin user management
-- document-type settings
-- `RAGfind` KB selection
+- Upload-, Crawl-, Directory-Sync- und Git-Import-Formulare
+- Dokumentbrowser mit Vorschau und Dokumentaktionen
+- Trigger-Oberflaechen fuer Dokumentanalysen
+- Unterstuetzung fuer Dokument-Reklassifikation
+- Knowledge-Base-Verwaltung
+- MCP-Principal-Verwaltung
+- Admin-User-Verwaltung
+- Dokumenttyp-Einstellungen
+- `RAGfind`-KB-Auswahl
 
-The admin console is the place where `RAGfind` search scope is configured.
+Die Admin-Konsole ist die Stelle, an der der Such-Scope fuer `RAGfind` konfiguriert wird.
 
 ## RAGfind
 
-`RAGfind` is a separate container and frontend intended for end-user document search.
+`RAGfind` ist ein separater Container und ein separates Frontend fuer die Endnutzer-Dokumentsuche.
 
-Current behavior:
+Aktuelles Verhalten:
 
-- searches only in the knowledge bases enabled for `RAGfind`
-- groups chunk hits into document-level results
-- supplements grouped search results with direct title/source-reference matches when needed
-- always opens a local viewer instead of redirecting crawled pages to the live website
-- provides a multisource viewer with rendered HTML, rendered Markdown, syntax-highlighted code, and a plaintext tab
+- sucht nur in den fuer `RAGfind` aktivierten Wissensdatenbanken
+- gruppiert Chunk-Treffer zu dokumentzentrierten Ergebnissen
+- zieht bei Bedarf direkte Titel- und Source-Ref-Treffer als Ergaenzung nach
+- oeffnet immer einen lokalen Viewer statt gecrawlte Seiten direkt auf der Live-Website aufzurufen
+- bietet einen Multisource-Viewer mit gerendertem HTML, gerendertem Markdown, syntaxhervorgehobenem Code und einem Plaintext-Tab
 
-## Open WebUI Integration
+## Open-WebUI-Integration
 
-Open WebUI should connect through MCP only.
+Open WebUI sollte nur ueber MCP angebunden werden.
 
-Recommended endpoint:
+Empfohlener Endpunkt:
 
 ```text
 http://localhost:3311/mcp
 ```
 
-There are no repository-managed Open WebUI Python filter, tool, or action files in this repository anymore.
+Es gibt in diesem Repository keine mitverwalteten Open-WebUI-Python-Filter-, Tool- oder Action-Dateien mehr.
 
-## MCP Support
+## MCP-Unterstuetzung
 
-The service exposes MCP in two modes.
+Der Service stellt MCP in zwei Modi bereit.
 
 ### Streamable HTTP MCP
 
-Endpoint:
+Endpunkt:
 
 ```text
 http://localhost:3311/mcp
 ```
 
-### Local stdio MCP
+### Lokales stdio-MCP
 
-Development:
+Entwicklung:
 
 ```bash
 npm run dev:mcp:stdio
 ```
 
-Production build:
+Produktions-Build:
 
 ```bash
 npm run build
 npm run start:mcp:stdio
 ```
 
-### MCP Tool Categories
+### MCP-Tool-Kategorien
 
-Available tools cover:
+Verfuegbare Tools decken ab:
 
-- retrieval and smart search
-- document listing and lookup
-- fulltext, sections, and structure access
-- original file access metadata
-- document analysis and summaries
-- document comparison and cross-reference workflows
+- Retrieval und Smart Search
+- Dokumentlisten und Dokument-Lookups
+- Volltext-, Section- und Strukturzugriff
+- Originaldatei-Metadaten
+- Dokumentanalysen und Zusammenfassungen
+- Dokumentvergleiche und Cross-Reference-Workflows
 
-## HTTP API Highlights
+## Wichtige HTTP-API-Endpunkte
 
 ### Retrieval
 
 - `POST /api/smart-search`
 - `POST /api/cross-reference`
 
-### Documents
+### Dokumente
 
 - `GET /api/documents`
 - `GET /api/documents/:id`
@@ -371,7 +371,7 @@ Available tools cover:
 - `GET /api/documents/:id/original/meta`
 - `GET /api/documents/:id/original`
 
-### Analysis
+### Analyse
 
 - `GET /api/documents/:id/analysis/actions`
 - `GET /api/documents/:id/analysis/decisions`
@@ -388,40 +388,40 @@ Available tools cover:
 - `GET /api/documents/:id/compare`
 - `GET /api/documents/:id/compare-version`
 
-## Crawl And Git Notes
+## Hinweise Zu Crawl und Git
 
-- website crawling follows same-site links and downloadable files
-- redirected domains such as `bmetallica.de -> www.bmetallica.de` are crawled correctly across the redirected origin
-- git ingestion supports optional branch and subpath selection and indexes common text/code formats
+- Website-Crawling folgt same-site Links und herunterladbaren Dateien
+- weitergeleitete Domains wie `bmetallica.de -> www.bmetallica.de` werden ueber den Redirect-Ursprung hinweg korrekt gecrawlt
+- Git-Ingestion unterstuetzt optionalen Branch- und Subpfad-Scope und indexiert gaengige Text- und Code-Formate
 
-## GitHub Repository Preparation
+## GitHub-Repository-Vorbereitung
 
-This repository is prepared to be published on GitHub with:
+Dieses Repository ist fuer die Veroeffentlichung auf GitHub vorbereitet mit:
 
-- a repository-focused README
-- an MIT license
-- `.gitignore` for Node, build, local env, and import artifacts
-- container-based and local development instructions
-- explicit separation between admin surface and `RAGfind`
+- einer repositorytauglichen README
+- einer MIT-Lizenz
+- `.gitignore` fuer Node, Build, lokale Envs und Import-Artefakte
+- Anleitungen fuer containerbasierten und lokalen Betrieb
+- einer klaren Trennung zwischen Admin-Oberflaeche und `RAGfind`
 
-## License
+## Lizenz
 
-This project is licensed under the MIT License. See `LICENSE`.
+Dieses Projekt steht unter der MIT-Lizenz. Siehe `LICENSE`.
 
-## Roadmap And Design Notes
+## Roadmap und Design-Notizen
 
-For deeper product direction and retrieval design notes, see:
+Fuer tiefere Produkt- und Retrieval-Notizen siehe:
 
 - `ROADMAP.md`
 - `rag-logik.md`
 
 ## Status
 
-This is an actively evolving repository, but the current implementation already includes:
+Das Repository ist weiterhin in aktiver Entwicklung, die aktuelle Implementierung enthaelt aber bereits:
 
-- multi-source ingestion
-- persisted structure and original file references
-- analysis and summary workflows
-- MCP integration
-- knowledge-base-aware admin configuration
-- separate `RAGfind` search experience with local viewer
+- Multi-Source-Ingestion
+- persistierte Struktur- und Originaldatei-Referenzen
+- Analyse- und Summary-Workflows
+- MCP-Integration
+- wissensdatenbankbewusste Admin-Konfiguration
+- separate `RAGfind`-Sucherfahrung mit lokalem Viewer
