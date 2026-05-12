@@ -44,6 +44,18 @@ Es kombiniert:
 - HTTP-Endpunkt: `http://localhost:3311/mcp`
 - lokaler stdio-Einstieg: `npm run dev:mcp:stdio` oder `npm run start:mcp:stdio`
 
+## Screenshots
+
+### Admin-UI
+
+![Admin-UI](./admin-ui.jpg)
+
+### RAGfind
+
+![RAGfind Suche](./ragfind1.jpg)
+
+![RAGfind Viewer](./ragfind2.jpg)
+
 ## Kernfunktionen
 
 ### Ingestion
